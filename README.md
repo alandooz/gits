@@ -3,7 +3,7 @@ A collection of Bash scripts.
 
 ## Make the script executable
 ```bash
-$ chmod u+x sugh.sh
+$ chmod u+x nameOfScript
 ```
 
 ## Make the scripts available global
