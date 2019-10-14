@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo
-echo "#####  Welcome to Gits v0.2  #####"
+echo "#####  Welcome to Gits v0.3  #####"
 echo "A massive GitHub Cloner and Git Updater helper."
 echo "_by AlanDooz_"
 
@@ -26,9 +26,9 @@ if [ $1 ]; then
 fi
 
 echo
-echo 'Do you want to Clone all your Github repos or tu pull all your local Git repos?'
+echo 'Do you want to Clone all your Github repos, pull all your local Git repos or push all your local Git repos?'
 PS3=$'\n''Please enter your choice: '
-options=("Clone Github Repos" "Pull local Git repos")
+options=("Clone Github Repos" "Pull local Git repos" "Push local Git repos")
 echo
 select opt in "${options[@]}"
 do
@@ -38,6 +38,13 @@ do
             ;;
         "Pull local Git repos")
             for i in */.git; do ( echo; echo "${i%????}"; cd $i/..; git pull; ); done
+            echo
+            echo "Thanks for using Gits! :)"
+            echo
+            exit 0
+            ;;
+        "Push local Git repos")
+            for i in */.git; do ( echo; echo "${i%????}"; cd $i/..; git add -A; git commit -m "Pushed working commit with Gits"; git pull; git push; ); done
             echo
             echo "Thanks for using Gits! :)"
             echo
