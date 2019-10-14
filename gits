@@ -1,8 +1,35 @@
 #!/bin/bash
 
+echo
+echo "#####  Welcome to Gits v0.2  #####"
+echo "A massive GitHub Cloner and Git Updater helper."
+echo "_by AlanDooz_"
+
+echo
+if [ $1 ]; then
+    if [ "${1: -1}" = "/" ];
+        then
+            target=$1
+        else
+            target="${1}/"
+    fi
+    if [ -d "$target" ];
+        then
+            echo "Working on $target"
+            cd "${target}"
+        else
+            echo "The directory $target doesn't exists."
+            exit 1
+    fi
+    else
+    echo "Working on current directory..."
+fi
+
+echo
 echo 'Do you want to Clone all your Github repos or tu pull all your local Git repos?'
-PS3='Please enter your choice: '
+PS3=$'\n''Please enter your choice: '
 options=("Clone Github Repos" "Pull local Git repos")
+echo
 select opt in "${options[@]}"
 do
     case $opt in
@@ -10,16 +37,21 @@ do
             break
             ;;
         "Pull local Git repos")
-            for i in */.git; do ( echo $i; cd $i/..; git pull; ); done
+            for i in */.git; do ( echo; echo "${i%????}"; cd $i/..; git pull; ); done
+            echo
+            echo "Thanks for using Gits! :)"
+            echo
             exit 0
             ;;
         *) echo "Invalid option";;
     esac
 done
 
+echo
 echo 'This account is a user or a organization?'
-PS3='Please enter your choice: '
+PS3=$'\n''Please enter your choice: '
 options=("User" "Organization")
+echo
 select opt in "${options[@]}"
 do
     case $opt in
@@ -35,31 +67,39 @@ do
     esac
 done
 
+echo
 while [ -z "$username" ]
 do
     read -p 'Username: ' username
 done
 
+echo
 if [ "$type" == "users" ]; then
     echo 'Do you want to clone private repos too?'
-    PS3='Please enter your choice: '
+    PS3=$'\n''Please enter your choice: '
     options=("Yes" "No")
+    echo
     select opt in "${options[@]}"
     do
         case $opt in
             "Yes")
-                while [ -z "$username" ]
+                echo
+                while [ -z "$GITHUB_API_TOKEN" ]
                 do
                     read -sp 'Github API Token: ' GITHUB_API_TOKEN
                 done
 
-                page=1
-                maxpageprivate=$(curl -s -H "Authorization: token $GITHUB_API_TOKEN" "https://api.github.com/user/repos?&affiliation=owner&visibility=private" | grep -w clone_url | grep -o '[^"]\+://.\+.git' | xargs -L1 git clone)
+                privaterepos=$(curl -s -H "Authorization: token $GITHUB_API_TOKEN" "https://api.github.com/user/repos?&affiliation=owner&visibility=private" | grep -w clone_url | grep -o '[^"]\+://.\+.git')
 
-                while [ $page -le $maxpageprivate ]
+                privatepage=1
+                countprivaterepos=$(echo "${privaterepos}" | wc -l)
+                maxpageprivaterepos=$(( ${countprivaterepos} / (N+1)/100 + 1 ))
+
+                while [ $privatepage -le $maxpageprivaterepos ]
                 do
-                    curl -s -H "Authorization: token $GITHUB_API_TOKEN" "https://api.github.com/user/repos?&affiliation=owner&visibility=private" | grep -w clone_url | grep -o '[^"]\+://.\+.git' | xargs -L1 git clone
-                    ((page++))
+                    echo
+                    echo "$privaterepos" | xargs -L1 git clone
+                    ((privatepage++))
                 done
                 break
                 ;;
@@ -71,13 +111,20 @@ if [ "$type" == "users" ]; then
     done
 fi
 
-page=1
-maxpagepublic=$(curl -s "https://api.github.com/$type/$username/repos?page=$page&per_page=100" | grep -w clone_url | grep -o '[^"]\+://.\+.git' | wc -l)
+publicrepos=$(curl -s "https://api.github.com/$type/$username/repos?page=$page&per_page=100" | grep -w clone_url | grep -o '[^"]\+://.\+.git')
 
-while [ $page -le $maxpagepublic ]
+publicpage=1
+countpublicrepos=$(echo "${publicrepos}" | wc -l)
+maxpagepublicrepos=$(( ${countpublicrepos} / (N+1)/100 + 1 ))
+
+while [ $publicpage -le $maxpagepublicrepos ]
 do
-    curl -s "https://api.github.com/$type/$username/repos?page=$page&per_page=100" | grep -w clone_url | grep -o '[^"]\+://.\+.git' | xargs -L1 git clone
-    ((page++))
+    echo
+    echo "$publicrepos" | xargs -L1 git clone
+    ((publicpage++))
 done
 
+echo
+echo "Thanks for using Gits! :)"
+echo
 exit 0
