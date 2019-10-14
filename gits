@@ -1,0 +1,83 @@
+#!/bin/bash
+
+echo 'Do you want to Clone all your Github repos or tu pull all your local Git repos?'
+PS3='Please enter your choice: '
+options=("Clone Github Repos" "Pull local Git repos")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "Clone Github Repos")
+            break
+            ;;
+        "Pull local Git repos")
+            for i in */.git; do ( echo $i; cd $i/..; git pull; ); done
+            exit 0
+            ;;
+        *) echo "Invalid option";;
+    esac
+done
+
+echo 'This account is a user or a organization?'
+PS3='Please enter your choice: '
+options=("User" "Organization")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "User")
+            type=users
+            break
+            ;;
+        "Organization")
+            type=orgs
+            break
+            ;;
+        *) echo "Invalid option";;
+    esac
+done
+
+while [ -z "$username" ]
+do
+    read -p 'Username: ' username
+done
+
+if [ "$type" == "users" ]; then
+    echo 'Do you want to clone private repos too?'
+    PS3='Please enter your choice: '
+    options=("Yes" "No")
+    select opt in "${options[@]}"
+    do
+        case $opt in
+            "Yes")
+                while [ -z "$username" ]
+                do
+                    read -sp 'Github API Token: ' GITHUB_API_TOKEN
+                done
+
+                page=1
+                maxpageprivate=$(curl -s -H "Authorization: token $GITHUB_API_TOKEN" "https://api.github.com/user/repos?&affiliation=owner&visibility=private" | grep -w clone_url | grep -o '[^"]\+://.\+.git' | xargs -L1 git clone)
+
+                while [ $page -le $maxpageprivate ]
+                do
+                    curl -s -H "Authorization: token $GITHUB_API_TOKEN" "https://api.github.com/user/repos?&affiliation=owner&visibility=private" | grep -w clone_url | grep -o '[^"]\+://.\+.git' | xargs -L1 git clone
+                    ((page++))
+                done
+                break
+                ;;
+            "No")
+                break
+                ;;
+            *) echo "Invalid option";;
+        esac
+    done
+fi
+
+page=1
+maxpagepublic=$(curl -s "https://api.github.com/$type/$username/repos?page=$page&per_page=100" | grep -w clone_url | grep -o '[^"]\+://.\+.git' | wc -l)
+
+while [ $page -le $maxpagepublic ]
+do
+    curl -s "https://api.github.com/$type/$username/repos?page=$page&per_page=100" | grep -w clone_url | grep -o '[^"]\+://.\+.git' | xargs -L1 git clone
+    ((page++))
+done
+
+exit 0
