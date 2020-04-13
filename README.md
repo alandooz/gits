@@ -1,5 +1,5 @@
-# scripts
-A collection of Bash scripts.
+# Gits
+A massive GitHub Cloner and Git Updater helper.
 
 ## Make the script executable
 ```bash
